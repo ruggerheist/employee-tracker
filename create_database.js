@@ -26,9 +26,7 @@ con.query(sql, function (err, result) {
     if (err) throw err;
     console.log("Table created");
 });
-const departments = [ //left off here
 
-]
 var sql = "CREATE TABLE Roles (id INT PRIMARY KEY, job_title VARCHAR(50), department_id INT, salary INT, FOREIGN KEY (department_id) REFERENCES Department(id))";
 con.query(sql, function (err, result) {
     if (err) throw err;
