@@ -26,9 +26,24 @@ function viewDepartments() {
     console.table(dept_info);
     // res.json({
     //   message: 'success',
-    //   data: rows
+    //   data: dept_info
     // });
   });
 };
 
 viewDepartments();
+
+function viewRoles() {
+  const sql = `SELECT * from roles`;
+
+  con.query(sql, (err, role_info) => {
+    if (err) {
+      res.status(500).json({
+        error: err.message });
+        return;
+    }
+    console.table(role_info);
+  });
+};
+
+viewRoles();
