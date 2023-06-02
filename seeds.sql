@@ -3,4 +3,4 @@ VALUES
         ("Human Resources"),
         ("Sales"),
         ("Marketing"),
-        ("Legal")
+        ("Legal");

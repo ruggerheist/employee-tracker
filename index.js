@@ -3,8 +3,8 @@ const mysql = require('mysql2');
 
 var con = mysql.createConnection({
   host: "localhost",
-  user: "yourusername",
-  password: "yourpassword",
+  user: "root",
+  password: "Smawmk153",
   database: 'employee_db'  
 });
 
@@ -16,7 +16,7 @@ inquirer
 //}
 
 function viewDepartments() {
-    const sql = `SELECT * from departments`;
+    const sql = `SELECT * FROM departments`;
   
  con.query(sql, (err, dept_info) => {
     if (err) {
@@ -34,7 +34,7 @@ function viewDepartments() {
 viewDepartments();
 
 function viewRoles() {
-  const sql = `SELECT * from roles`;
+  const sql = `SELECT * FROM roles`;
 
   con.query(sql, (err, role_info) => {
     if (err) {
