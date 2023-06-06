@@ -92,20 +92,19 @@ function addNewEmployee() {
   db.query(`SELECT job_title FROM roles`, (err, data) => {
     console.log(data);
     data.forEach(element => {
-      titles.push(element.job_title);
-    });
+      titles.push(element.job_title);    
   });  
   console.log(titles);
   inquirer
     .prompt([
       {
         type: 'input',
-        name: 'first-name',
+        name: 'firstName',
         message: 'What is the employees first name?'    
       },
       {
         type: 'input',
-        name: 'last-name',
+        name: 'lastName',
         message: 'What is the employees last name?'   
       },
       {
@@ -115,9 +114,17 @@ function addNewEmployee() {
         choices: titles
       },
     ]).then((data) => {
-      console.log(data);
+      var newEmployee = []
+      db.query(`INSERT INTO employees (first_name, last_name, roles_id), VALUES (${data.firstName}, ${data.lastName}, ${data.role})`, (err, data) => {
+        data.forEach(element => {
+          newEmployee.push(element.first_name, element.last_name, element.roles_id);
+        })
+      });
+      
+      console.log(data.firstName, data.role);
       mainMenu();
     });
+  });
 };
 
 // function addNewRole() {
