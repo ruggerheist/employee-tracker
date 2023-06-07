@@ -114,17 +114,31 @@ function addNewEmployee() {
         choices: titles
       },
     ]).then((data) => {
-      var newEmployee = []
-      db.query(`INSERT INTO employees (first_name, last_name, roles_id), VALUES (${data.firstName}, ${data.lastName}, ${data.role})`, (err, data) => {
-        data.forEach(element => {
-          newEmployee.push(element.first_name, element.last_name, element.roles_id);
-        })
-      });
-      
-      console.log(data.firstName, data.role);
-      mainMenu();
-    });
+      //add switch case for roles id to switch job title to role id
+      // switch (data.role)
+      // case 'Manager':
+        // role.id = 1;
+        //break;
+      // case 'Training Coordinator':
+        // role.id = 2;
+        //break
+      // case 'Employee Relations:
+        // role.id = 3;
+        //break;
+      //case 'Account Manager':
+        // role.id = 4;
+        //break
+      //case 'Marketing Coordinator':
+        //role.id = 5
+        //break
+      db.query(`INSERT INTO employees (first_name, last_name, roles_id) VALUES ("${data.firstName}", "${data.lastName}", "${data.role}")`, (err, data) => {
+        if (err) console.log(err);
+        console.table(data)
+        mainMenu();
+      });                              
+    });    
   });
+  //mainMenu();
 };
 
 // function addNewRole() {
