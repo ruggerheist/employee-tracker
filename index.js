@@ -1,5 +1,6 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
+const figlet = require('figlet');
 
 const db = mysql.createConnection({
   host: "localhost",
@@ -7,6 +8,13 @@ const db = mysql.createConnection({
   password: "Smawmk153",
   database: 'employee_db'
 });
+
+figlet(`Employee\nDatabase`, function (err, data){ 
+  err ? console.error(err) : console.log(data)
+  
+    mainMenu();
+  }
+);
 
 function mainMenu() {
   inquirer
@@ -221,5 +229,3 @@ async function updateEmployeeData(data) {
   await db.promise().query(`UPDATE employees SET roles_id = "${roleId}" WHERE id = "${employeeId}"`);
   mainMenu();
 };
-
-mainMenu();
