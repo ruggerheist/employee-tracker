@@ -24,6 +24,7 @@ CREATE TABLE employees (
   last_name VARCHAR(30),
   roles_id INT NOT NULL,
   manager_id INT NULL,
+  is_manager BOOLEAN NOT NULL,
   PRIMARY KEY(id),
   FOREIGN KEY (roles_id) REFERENCES roles(id),
   FOREIGN KEY (manager_id) REFERENCES employees(id)

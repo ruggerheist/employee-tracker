@@ -10,8 +10,7 @@ const db = mysql.createConnection({
 });
 
 figlet(`Employee\nDatabase`, function (err, data){ 
-  err ? console.error(err) : console.log(data)
-  
+  err ? console.error(err) : console.log(data)  
     mainMenu();
   }
 );
@@ -72,7 +71,7 @@ function mainMenu() {
 function getEmployeeData(data) {
   var query = '';
   if (data.selection === 'all-employees') {
-    query = `SELECT e.id, e.first_name, e.last_name, r.job_title AS role, m.first_name AS manager_first_name, m.last_name AS manager_last_name FROM employees e JOIN roles r ON e.roles_id = r.id LEFT JOIN employees m ON e.manager_id = m.id`
+    query = `SELECT e.id, e.first_name, e.last_name, r.job_title AS role, m.first_name AS manager_first_name, m.last_name AS manager_last_name, e.is_manager, r.salary FROM employees e JOIN roles r ON e.roles_id = r.id LEFT JOIN employees m ON e.manager_id = m.id ORDER BY e.id ASC`
   } else if (data.selection === 'all-roles') {
     query = `SELECT r.id, job_title, d.name AS department_name, salary FROM roles r JOIN departments d ON d.id = r.departments_id`
   } else if (data.selection === 'all-departments') {
@@ -99,13 +98,11 @@ async function addNewEmployee() {
   roleData[0].forEach(element => {
     titles.push(element.job_title); 
   })
-  var managers = ['NULL'];
-  var managerData = await db.promise().query(`SELECT first_name, last_name, id FROM employees WHERE employees.manager_id IS NULL`);
-  managerData[0].forEach(element => {
-    console.log(element.first_name);
-    var managerName = `${element.first_name} ${element.last_name}`;
-    console.log(managerName);
-    managers.push({name: managerName, value: element.id});
+  var employees = [];
+  var employeeData = await db.promise().query(`SELECT e.id, e.first_name, e.last_name, r.job_title AS role, m.first_name AS manager_first_name, m.last_name AS manager_last_name, e.is_manager FROM employees e JOIN roles r ON e.roles_id = r.id LEFT JOIN employees m ON e.manager_id = m.id`);
+  employeeData[0].forEach(element => {
+    var employeeName = `${element.first_name} ${element.last_name}`;
+    employees.push({name: employeeName, id: element.id});
     // managers.push(element.first_name)
   }); 
   var data = await inquirer
@@ -128,18 +125,36 @@ async function addNewEmployee() {
       },
       {
         type: 'list',
-        name: 'managers',
-        message: 'Who is the employee\'s manager',
-        choices: managers
+        name: 'isManager',
+        message: 'Is this employee a manager?',
+        choices: ['Yes', 'No']
       },
+      {
+        type: 'list',
+        name: 'manager',
+        message: 'Who is the employee\'s manager',
+        choices: employees
+      },
+      
     ])
   var roleId;
   roleData[0].forEach(element => {
     if (element.job_title === data.role)
       roleId = element.id;
   })
-  console.log(data);
-  await db.promise().query(`INSERT INTO employees (first_name, last_name, roles_id, manager_id) VALUES ("${data.firstName}", "${data.lastName}", "${roleId}", "${data.managers}")`);
+  var isManager = false;
+  if (data.isManager === 'Yes')
+  isManager = true;
+  var manager = employees.find(employee => employee.name === data.manager);
+  await db.promise().query(`INSERT INTO employees (first_name, last_name, roles_id, manager_id, is_manager) VALUES ("${data.firstName}", "${data.lastName}", "${roleId}", "${manager.id}", ${isManager})`);
+  employees.forEach(employee => {
+    if (employee.name === data.manager)
+    employeeData[0].forEach(e => {
+      if (e.id === employee.id && e.is_manager === 0){    
+     db.promise().query(`UPDATE employees SET is_manager = true WHERE id = "${e.id}"`)
+      }
+    })  
+  });
   mainMenu();
 };
 
@@ -195,7 +210,7 @@ async function updateEmployeeData(data) {
   var employeeData = await db.promise().query(`SELECT id, first_name, last_name, roles_id, manager_id FROM employees`);
   employeeData[0].forEach(element => {
     employees.push(`${element.first_name} ${element.last_name}`);
-  })
+  });
   var roles = [];
   var roleData = await db.promise().query(`SELECT id, job_title FROM roles`);
   roleData[0].forEach(element => {
