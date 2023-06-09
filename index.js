@@ -25,31 +25,35 @@ function mainMenu() {
         choices: [
           {
             name: 'View All Employees',
-            value: 'all-employees'
+            value: 'allEmployees'
           },
           {
             name: 'Add Employee',
-            value: 'add-employee'
+            value: 'addEmployee'
           },
           {
             name: 'Update Employee Role',
-            value: 'update-employee-role'
+            value: 'updateEmployeeRole'
           },
           {
             name: 'View All Roles',
-            value: 'all-roles'
+            value: 'allRoles'
           },
           {
             name: 'Add Role',
-            value: 'add-role'
+            value: 'addRole'
           },
           {
             name: 'View All Departments',
-            value: 'all-departments'
+            value: 'allDepartments'
           },
           {
             name: 'Add Department',
-            value: 'add-department'
+            value: 'addDepartment'
+          },
+          {
+            name: 'View Employees by Manager',
+            value: 'viewEmployeeByManager'
           },
           {
             name: 'Quit',
@@ -58,37 +62,75 @@ function mainMenu() {
         ]
       }
     ]).then((data) => {
-      if (['all-employees', 'all-roles', 'all-departments'].includes(data.selection))
+      if (['allEmployees', 'allRoles', 'allDepartments'].includes(data.selection))
         getEmployeeData(data);
-      else if (['add-employee', 'add-role', 'add-department'].includes(data.selection))
+      else if (['addEmployee', 'addRole', 'addDepartment'].includes(data.selection))
         addEmployeeData(data);
-      else if (data.selection === 'update-employee-role')
+      else if (data.selection === 'updateEmployeeRole')
         updateEmployeeData(data);
+      // else if (data.selection === 'viewEmployeeByManager')
+      //   managedEmployees(data);
       else process.exit(0);
     });
-}
+};
+
+// async function managedEmployees(data) {
+//   var managers = '';
+//   if (data.selection === 'viewEmployeeByManager') {
+//     query = `SELECT manager.id, manager.first_name, manager.last_name FROM employees m`
+//   }
+// var data = await inquirer
+//     .prompt ([
+//       {
+//         type: 'list',
+//         name: 'managers',
+//         message: 'Select manager to see managed employees',
+//         list: managers
+//       },
+//     ]);
+//       var employees = '';
+//       if (data.employees === data.manager_id)
+//       var manager = employees.find(employee => employee.name === data.manager);
+//       await db.promise().query(`INSERT INTO employees (first_name, last_name, roles_id, manager_id, is_manager) VALUES ("${data.firstName}", "${data.lastName}", "${roleId}", "${manager.id}", ${isManager})`);
+//       employees.forEach(employee => {
+//       if (employee.name === data.manager)
+//       employeeData[0].forEach(e => {
+//         if (e.id === employee.id && e.is_manager === 0){    
+//       db.promise().query(`UPDATE employees SET is_manager = true WHERE id = "${e.id}"`)
+//         }
+//       })  
+//     });
+//   mainMenu();       
+  
+// }
 
 function getEmployeeData(data) {
   var query = '';
-  if (data.selection === 'all-employees') {
+  if (data.selection === 'allEmployees') {
     query = `SELECT e.id, e.first_name, e.last_name, r.job_title AS role, m.first_name AS manager_first_name, m.last_name AS manager_last_name, e.is_manager, r.salary FROM employees e JOIN roles r ON e.roles_id = r.id LEFT JOIN employees m ON e.manager_id = m.id ORDER BY e.id ASC`
-  } else if (data.selection === 'all-roles') {
+  } else if (data.selection === 'allRoles') {
     query = `SELECT r.id, job_title, d.name AS department_name, salary FROM roles r JOIN departments d ON d.id = r.departments_id`
-  } else if (data.selection === 'all-departments') {
+  } else if (data.selection === 'allDepartments') {
     query = `SELECT * FROM departments`;
   }
   db.query(query, (err, employeeData) => {
-    console.table(employeeData);
+    var tableR = {};
+    employeeData.forEach(row => {
+      const updatedRow = {...row};
+      delete updatedRow.id;
+      tableR[row.id] = updatedRow;
+    })
+    console.table(tableR);
     mainMenu();
   });
 };
 
 function addEmployeeData(data) {
-  if (data.selection === 'add-employee')
+  if (data.selection === 'addEmployee')
     addNewEmployee();
-  else if (data.selection === 'add-role')
+  else if (data.selection === 'addRole')
     addNewRole();
-  else if (data.selection === 'add-department')
+  else if (data.selection === 'addDepartment')
     addNewDepartment();
 };
 
@@ -244,3 +286,4 @@ async function updateEmployeeData(data) {
   await db.promise().query(`UPDATE employees SET roles_id = "${roleId}" WHERE id = "${employeeId}"`);
   mainMenu();
 };
+
