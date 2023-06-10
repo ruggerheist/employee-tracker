@@ -68,41 +68,41 @@ function mainMenu() {
         addEmployeeData(data);
       else if (data.selection === 'updateEmployeeRole')
         updateEmployeeData(data);
-      // else if (data.selection === 'viewEmployeeByManager')
-      //   managedEmployees(data);
+      else if (data.selection === 'viewEmployeeByManager')
+        managedEmployees(data);
       else process.exit(0);
     });
 };
 
-// async function managedEmployees(data) {
-//   var managers = '';
-//   if (data.selection === 'viewEmployeeByManager') {
-//     query = `SELECT manager.id, manager.first_name, manager.last_name FROM employees m`
-//   }
-// var data = await inquirer
-//     .prompt ([
-//       {
-//         type: 'list',
-//         name: 'managers',
-//         message: 'Select manager to see managed employees',
-//         list: managers
-//       },
-//     ]);
-//       var employees = '';
-//       if (data.employees === data.manager_id)
-//       var manager = employees.find(employee => employee.name === data.manager);
-//       await db.promise().query(`INSERT INTO employees (first_name, last_name, roles_id, manager_id, is_manager) VALUES ("${data.firstName}", "${data.lastName}", "${roleId}", "${manager.id}", ${isManager})`);
-//       employees.forEach(employee => {
-//       if (employee.name === data.manager)
-//       employeeData[0].forEach(e => {
-//         if (e.id === employee.id && e.is_manager === 0){    
-//       db.promise().query(`UPDATE employees SET is_manager = true WHERE id = "${e.id}"`)
-//         }
-//       })  
-//     });
-//   mainMenu();       
-  
-// }
+async function managedEmployees(data) {
+  console.log(data);
+  var managers = [];
+  console.log(managers);
+  if (data.selection === 'viewEmployeeByManager') {
+    query = `SELECT first_name, last_name FROM employees WHERE is_manager = 1`  
+var data = await inquirer
+    .prompt ([
+      {
+        type: 'list',
+        name: 'managers',
+        message: 'Select manager to see managed employees',
+        choices: managers
+      },
+    ]);
+      var employees = '';
+      if (data.employees === data.manager_id)
+      var manager = employees.find(employee => employee.name === data.manager_id);
+      manager.forEach(employee => {
+      if (employee.name === data.manager)
+      employeeData[0].forEach(e => {
+        if (e.id === m.id){    
+      db.promise().query(`SELECT employees.id FROM employees`)
+        }
+      })  
+    });
+  mainMenu();       
+  } 
+}
 
 function getEmployeeData(data) {
   var query = '';
@@ -145,7 +145,6 @@ async function addNewEmployee() {
   employeeData[0].forEach(element => {
     var employeeName = `${element.first_name} ${element.last_name}`;
     employees.push({name: employeeName, id: element.id});
-    // managers.push(element.first_name)
   }); 
   var data = await inquirer
     .prompt([
