@@ -397,4 +397,3 @@ async function updateEmployeeData(data) {
   await db.promise().query(`UPDATE employees SET roles_id = "${roleId}" WHERE id = "${employeeId}"`);
   mainMenu();
 };
-
