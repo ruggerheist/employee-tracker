@@ -53,7 +53,19 @@ function mainMenu() {
           },
           {
             name: 'View Employees by Manager',
-            value: 'viewEmployeeByManager'
+            value: 'viewEmployeesByManager'
+          },
+          {
+            name: 'View Employees by Department',
+            value: 'viewEmployeesByDepartment'
+          },
+          {
+            name: 'View Department Budget',
+            value: 'viewDepartmentBudget'
+          },
+          {
+            name: 'Delete Department, Role, or Employee',
+            value: 'delete'
           },
           {
             name: 'Quit',
@@ -68,41 +80,146 @@ function mainMenu() {
         addEmployeeData(data);
       else if (data.selection === 'updateEmployeeRole')
         updateEmployeeData(data);
-      else if (data.selection === 'viewEmployeeByManager')
-        managedEmployees(data);
+      else if (data.selection === 'viewEmployeesByManager')
+        managedEmployees();
+      else if (data.selection === 'viewEmployeesByDepartment')
+        employeesByDepartment();
+      else if (data.selection === 'viewDepartmentBudget')
+        departmentBudgets();
+      else if (data.selection === 'delete')
+        deletePrompt();
       else process.exit(0);
     });
 };
 
-async function managedEmployees(data) {
-  console.log(data);
-  var managers = [];
-  console.log(managers);
-  if (data.selection === 'viewEmployeeByManager') {
-    query = `SELECT first_name, last_name FROM employees WHERE is_manager = 1`  
+async function fetchAllEmployees() {
+  var employees = [];
+  var employeeData = await db.promise().query(`SELECT e.id, e.first_name, e.last_name, r.job_title AS role, m.first_name AS manager_first_name, m.last_name AS manager_last_name, e.is_manager FROM employees e JOIN roles r ON e.roles_id = r.id LEFT JOIN employees m ON e.manager_id = m.id`);
+  employeeData[0].forEach(element => {
+    var employeeName = `${element.first_name} ${element.last_name}`
+    employees.push({name: employeeName, id: element.id});
+  }); 
+  return employees;
+};
+
+async function managedEmployees() {
+var managers = await db.promise().query (`SELECT first_name, last_name FROM employees WHERE is_manager = true`);
+var choices = [];
+managers[0].forEach(manager => {choices.push(`${manager.first_name} ${manager.last_name}`)});
 var data = await inquirer
     .prompt ([
       {
         type: 'list',
-        name: 'managers',
+        name: 'selectedManager',
         message: 'Select manager to see managed employees',
-        choices: managers
+        choices: choices
       },
-    ]);
-      var employees = '';
-      if (data.employees === data.manager_id)
-      var manager = employees.find(employee => employee.name === data.manager_id);
-      manager.forEach(employee => {
-      if (employee.name === data.manager)
-      employeeData[0].forEach(e => {
-        if (e.id === m.id){    
-      db.promise().query(`SELECT employees.id FROM employees`)
-        }
-      })  
-    });
-  mainMenu();       
-  } 
-}
+    ]);   
+        
+    var employees = await fetchAllEmployees();
+      var selectedManager = employees.find(employee => employee.name === data.selectedManager);      
+      var listOfManagedEmployees = await db.promise().query(`SELECT * FROM employees WHERE manager_id = "${selectedManager.id}"`);
+      console.table(listOfManagedEmployees[0]);
+    mainMenu();   
+};
+
+async function employeesByDepartment() {
+  var departments = await db.promise().query (`SELECT id, name FROM departments`);
+  var choices = [];
+  departments[0].forEach(department => {choices.push(`${department.name}`)});
+  var data = await inquirer
+      .prompt ([
+        {
+          type: 'list',
+          name: 'selectedDepartment',
+          message: 'Select department to see employees',
+          choices: choices
+        },
+      ]); 
+      var departmentId;
+      departments[0].forEach(department => {if (department.name === data.selectedDepartment)departmentId = department.id});         
+      var listOfEmployees = await db.promise().query(`SELECT e.id, e.first_name, e.last_name, r.job_title AS role, m.first_name AS manager_first_name, m.last_name AS manager_last_name, e.is_manager FROM employees e JOIN roles r ON e.roles_id = r.id LEFT JOIN employees m ON e.manager_id = m.id JOIN departments d on r.departments_id = d.id WHERE d.id = "${departmentId}"`);
+        console.table(listOfEmployees[0]);
+      mainMenu();   
+  };
+
+  async function deletePrompt() {
+    var table = await inquirer
+        .prompt ([
+          {
+            type: 'list',
+            name: 'selectedTable',
+            message: 'Select a Category to Delete From',
+            choices: ['Departments', 'Roles', 'Employees']
+          },
+        ]); 
+        if (table.selectedTable === 'Departments') {
+        var departmentNames = await db.promise().query(`SELECT name FROM departments`);
+        var departments = [];
+          departmentNames[0].forEach(departmentName => {departments.push(departmentName.name)});
+        var department = await inquirer
+          .prompt ([
+            {
+              type: 'list',
+              name: 'selectedDepartment',
+              message: 'Select a Department to Delete',
+              choices: departments
+            }
+          ])
+          await db.promise().query(`DELETE FROM departments WHERE name = "${department.selectedDepartment}"`);
+        } else if (table.selectedTable === 'Roles') {
+          var roleNames = await db.promise().query(`SELECT job_title FROM roles`);
+          var roles = [];
+          roleNames[0].forEach(roleName => {roles.push(roleName.job_title)});
+          var role = await inquirer
+            .prompt ([
+              {
+                type: 'list',
+                name: 'selectedRole',
+                message: 'Select a Role to Delete',
+                choices: roles
+              }
+            ])
+            await db.promise().query(`DELETE FROM roles WHERE job_title = "${role.selectedRole}"`);
+          } else if (table.selectedTable === 'Employees') {
+            var employees = await db.promise().query(`SELECT id, first_name, last_name FROM employees`)
+            var employeeNames = [];
+            employees[0].forEach(employee => {employeeNames.push(`${employee.first_name} ${employee.last_name}`)});
+            var selectedEmployee = await inquirer
+              .prompt ([
+                {
+                  type: 'list',
+                  name: 'name',
+                  message: 'Select an Employee to Delete',
+                  choices: employeeNames
+                }
+              ])
+              var employeeId;
+              employees[0].forEach(employee => {if (selectedEmployee.name === `${employee.first_name} ${employee.last_name}`) employeeId = employee.id});
+              await db.promise().query(`DELETE FROM employees WHERE id = "${employeeId}"`);
+            }        
+        mainMenu();   
+    };
+
+  async function departmentBudgets() {
+    var departments = await db.promise().query (`SELECT id, name FROM departments`);
+    var choices = [];
+    departments[0].forEach(department => {choices.push(`${department.name}`)});
+    var data = await inquirer
+        .prompt ([
+          {
+            type: 'list',
+            name: 'selectedDepartment',
+            message: 'Select department to see the total budget',
+            choices: choices
+          },
+        ]); 
+        var departmentId;
+        departments[0].forEach(department => {if (department.name === data.selectedDepartment)departmentId = department.id});         
+        var departmentBudgets = await db.promise().query(`SELECT SUM(salary) FROM roles WHERE departments_id = "${departmentId}"`);
+          console.table(departmentBudgets[0]);
+        mainMenu();   
+    };
 
 function getEmployeeData(data) {
   var query = '';
@@ -140,12 +257,7 @@ async function addNewEmployee() {
   roleData[0].forEach(element => {
     titles.push(element.job_title); 
   })
-  var employees = [];
-  var employeeData = await db.promise().query(`SELECT e.id, e.first_name, e.last_name, r.job_title AS role, m.first_name AS manager_first_name, m.last_name AS manager_last_name, e.is_manager FROM employees e JOIN roles r ON e.roles_id = r.id LEFT JOIN employees m ON e.manager_id = m.id`);
-  employeeData[0].forEach(element => {
-    var employeeName = `${element.first_name} ${element.last_name}`;
-    employees.push({name: employeeName, id: element.id});
-  }); 
+  var employees = fetchAllEmployees();
   var data = await inquirer
     .prompt([
       {
