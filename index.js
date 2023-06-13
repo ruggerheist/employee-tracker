@@ -215,10 +215,15 @@ async function employeesByDepartment() {
           },
         ]); 
         var departmentId;
-        departments[0].forEach(department => {if (department.name === data.selectedDepartment)departmentId = department.id});         
-        var departmentBudgets = await db.promise().query(`SELECT SUM(salary) FROM roles WHERE departments_id = "${departmentId}"`);
-          console.table(departmentBudgets[0]);
-        mainMenu();   
+        
+        departments[0].forEach(department => {if (department.name === data.selectedDepartment)departmentId = department.id}); 
+        console.log(departmentId)        
+        var departmentBudgets = await db.promise().query(`select (
+          (SELECT count(*) FROM employees where roles_id = ?) * 
+          (SELECT SUM(salary) FROM roles WHERE departments_id = ?)
+          ) as totalBudget;`,[choices ,departmentId]);
+          console.log(departmentBudgets[0],departmentBudgets[1][0]);
+        mainMenu();  
     };
 
 function getEmployeeData(data) {
@@ -257,7 +262,7 @@ async function addNewEmployee() {
   roleData[0].forEach(element => {
     titles.push(element.job_title); 
   })
-  var employees = fetchAllEmployees();
+  var employees = await fetchAllEmployees();
   var data = await inquirer
     .prompt([
       {
@@ -290,23 +295,28 @@ async function addNewEmployee() {
       },
       
     ])
+
+
   var roleId;
   roleData[0].forEach(element => {
     if (element.job_title === data.role)
       roleId = element.id;
   })
+
   var isManager = false;
   if (data.isManager === 'Yes')
   isManager = true;
+
   var manager = employees.find(employee => employee.name === data.manager);
+
   await db.promise().query(`INSERT INTO employees (first_name, last_name, roles_id, manager_id, is_manager) VALUES ("${data.firstName}", "${data.lastName}", "${roleId}", "${manager.id}", ${isManager})`);
-  employees.forEach(employee => {
+
+
+  employees.forEach(async employee => {
     if (employee.name === data.manager)
-    employeeData[0].forEach(e => {
-      if (e.id === employee.id && e.is_manager === 0){    
-     db.promise().query(`UPDATE employees SET is_manager = true WHERE id = "${e.id}"`)
-      }
-    })  
+
+          await db.promise().query(`UPDATE employees SET is_manager = true WHERE id = "${employee.id}"`)
+          
   });
   mainMenu();
 };
